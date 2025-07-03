@@ -2,7 +2,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
-import { OTPAuth } from 'https://esm.sh/otpauth@9.0.0'; // Bibliothèque pour 2FA
+import { OTPAuth } from 'https://esm.sh/otpauth@9.0.0';
 
 serve(async (req) => {
     try {

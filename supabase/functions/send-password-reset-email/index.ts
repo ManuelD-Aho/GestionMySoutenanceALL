@@ -1,6 +1,8 @@
 // supabase/functions/send-password-reset-email/index.ts
 
+// @ts-ignore
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+// @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
 import { sendEmail } from '../_shared/email-service.ts'; // Votre service Zoho
 
@@ -22,13 +24,7 @@ serve(async (req) => {
         );
 
         // 1. Générer un token de réinitialisation et un lien
-        // Supabase Auth gère la génération du token et l'envoi de l'e-mail par son propre service SMTP.
-        // Si vous voulez utiliser Zoho pour CET email spécifique, vous devez le gérer manuellement.
-        // Cela implique de générer un token, le stocker dans votre table 'utilisateur', et l'envoyer via Zoho.
-
-        // Pour cet exemple, nous allons utiliser la fonction native de Supabase Auth pour générer le lien,
-        // puis nous l'enverrons via Zoho. C'est un compromis pour la sécurité du token.
-        const { data: { user, properties }, error: generateLinkError } = await supabaseClient.auth.admin.generateLink({
+        const { data: { properties }, error: generateLinkError } = await supabaseClient.auth.admin.generateLink({
             type: 'password_reset',
             email: email,
             redirectTo: `${Deno.env.get('APP_URL')}/index.html?form=reset_password`,

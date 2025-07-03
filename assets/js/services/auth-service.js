@@ -153,6 +153,22 @@ async function validateEmailToken(token) {
     return await functionService.validateEmailToken(token);
 }
 
+/**
+ * Inscrit un nouvel utilisateur via Supabase Auth.
+ * @param {string} email - L'email de l'utilisateur.
+ * @param {string} password - Le mot de passe de l'utilisateur.
+ * @returns {Promise<{data: object|null, error: object|null}>}
+ */
+async function signUp(email, password) {
+    try {
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        return { data, error };
+    } catch (error) {
+        console.error("Erreur inattendue lors de l'inscription:", error);
+        return { data: null, error: { message: "Une erreur inattendue est survenue." } };
+    }
+}
+
 
 export const authService = {
     signIn,
@@ -163,4 +179,5 @@ export const authService = {
     disable2Fa,
     resetPassword,
     validateEmailToken,
+    signUp, // Ajout à l'export
 };

@@ -1,7 +1,8 @@
 // supabase/functions/impersonate-user/index.ts
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
+import { createClient } from 'https://esm.sh/@supabase/supabase/dist/esm/index.js'; // Utiliser la version ESM pour Deno
+import { verify } from 'https://deno.land/x/djwt@v2.8/mod.ts'; // Pour vérifier le JWT de l'admin
 
 serve(async (req) => {
     try {
@@ -23,7 +24,7 @@ serve(async (req) => {
             { auth: { persistSession: false } }
         );
 
-        // Vérifier le rôle de l'administrateur appelant
+        // Vérifier le token de l'admin pour obtenir son ID utilisateur
         const { data: { user: adminUser }, error: adminAuthError } = await supabaseAdminClient.auth.getUser(adminToken);
         if (adminAuthError || !adminUser) {
             console.error('Admin auth error:', adminAuthError);
@@ -64,10 +65,6 @@ serve(async (req) => {
         }
 
         // 3. Générer un lien magique pour l'utilisateur cible
-        // Supabase Auth ne fournit pas directement un moyen de générer un token d'accès pour un autre utilisateur
-        // sans passer par un flux d'authentification complet (email/password ou magic link).
-        // La solution la plus propre pour l'impersonation est de générer un magic link
-        // et de le "consommer" côté client pour obtenir une session.
         const { data: { session: targetSession }, error: sessionError } = await supabaseAdminClient.auth.admin.generateLink({
             type: 'magiclink',
             email: targetUserProfile.email_principal,
