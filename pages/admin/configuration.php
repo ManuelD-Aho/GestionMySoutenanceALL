@@ -1,4 +1,3 @@
-<!-- /pages/admin/configuration.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -51,7 +50,6 @@
             <div id="tab-content-parameters" class="tab-content active">
                 <h2 class="section-title">Paramètres Généraux du Système</h2>
                 <form id="general-params-form" class="form-grid">
-                    <!-- Parameters will be loaded here by JS -->
                     <div class="form-group">
                         <label for="MAX_LOGIN_ATTEMPTS">Tentatives de connexion max.</label>
                         <input type="number" id="MAX_LOGIN_ATTEMPTS" name="MAX_LOGIN_ATTEMPTS" required>
@@ -68,7 +66,47 @@
                         <label for="SMTP_HOST">Hôte SMTP</label>
                         <input type="text" id="SMTP_HOST" name="SMTP_HOST" required>
                     </div>
-                    <!-- ... autres champs de paramètres ... -->
+                    <div class="form-group">
+                        <label for="SMTP_PORT">Port SMTP</label>
+                        <input type="number" id="SMTP_PORT" name="SMTP_PORT" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="SMTP_USER">Utilisateur SMTP</label>
+                        <input type="text" id="SMTP_USER" name="SMTP_USER" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="SMTP_PASS">Mot de passe SMTP</label>
+                        <input type="password" id="SMTP_PASS" name="SMTP_PASS">
+                        <small class="form-hint">Laisser vide pour ne pas changer.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="SMTP_SECURE">Sécurité SMTP (tls/ssl)</label>
+                        <input type="text" id="SMTP_SECURE" name="SMTP_SECURE">
+                    </div>
+                    <div class="form-group">
+                        <label for="SMTP_FROM_EMAIL">Email Expéditeur</label>
+                        <input type="email" id="SMTP_FROM_EMAIL" name="SMTP_FROM_EMAIL" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="SMTP_FROM_NAME">Nom Expéditeur</label>
+                        <input type="text" id="SMTP_FROM_NAME" name="SMTP_FROM_NAME" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="UPLOADS_PATH_BASE">Chemin de base Uploads</label>
+                        <input type="text" id="UPLOADS_PATH_BASE" name="UPLOADS_PATH_BASE" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="UPLOADS_PATH_DOCUMENTS_GENERES">Sous-chemin Docs Générés</label>
+                        <input type="text" id="UPLOADS_PATH_DOCUMENTS_GENERES" name="UPLOADS_PATH_DOCUMENTS_GENERES" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="UPLOADS_PATH_PROFILE_PICTURES">Sous-chemin Photos Profil</label>
+                        <input type="text" id="UPLOADS_PATH_PROFILE_PICTURES" name="UPLOADS_PATH_PROFILE_PICTURES" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="UPLOADS_PATH_RAPPORT_IMAGES">Sous-chemin Images Rapport</label>
+                        <input type="text" id="UPLOADS_PATH_RAPPORT_IMAGES" name="UPLOADS_PATH_RAPPORT_IMAGES" required>
+                    </div>
                     <div class="form-action-buttons">
                         <button type="submit" class="btn btn-primary">
                             <span class="btn-text">Sauvegarder</span>
@@ -115,9 +153,7 @@
                             <th>Actions</th>
                         </tr>
                         </thead>
-                        <tbody id="academic-years-list">
-                        <!-- Years will be loaded here by JS -->
-                        </tbody>
+                        <tbody id="academic-years-list"></tbody>
                     </table>
                 </div>
             </div>
@@ -128,11 +164,9 @@
                     <label for="select-referential">Sélectionner un référentiel</label>
                     <select id="select-referential" class="select-box">
                         <option value="">-- Choisir --</option>
-                        <!-- Options loaded by JS -->
                     </select>
                 </div>
                 <div id="referential-details-panel" class="mt-4">
-                    <!-- Dynamic form and table for selected referential -->
                     <p class="text-center text-secondary">Sélectionnez un référentiel pour le gérer.</p>
                 </div>
             </div>
@@ -149,9 +183,7 @@
                             <th>Actions</th>
                         </tr>
                         </thead>
-                        <tbody id="document-models-list">
-                        <!-- Document models will be loaded here by JS -->
-                        </tbody>
+                        <tbody id="document-models-list"></tbody>
                     </table>
                 </div>
                 <button id="add-document-model-btn" class="btn btn-primary mt-4"><i class="fas fa-plus"></i> Ajouter Modèle</button>
@@ -170,9 +202,7 @@
                             <th>Actions</th>
                         </tr>
                         </thead>
-                        <tbody id="notification-templates-list">
-                        <!-- Notification templates will be loaded here by JS -->
-                        </tbody>
+                        <tbody id="notification-templates-list"></tbody>
                     </table>
                 </div>
                 <h3 class="subsection-title mt-6">Règles de Diffusion</h3>
@@ -187,9 +217,7 @@
                             <th>Actions</th>
                         </tr>
                         </thead>
-                        <tbody id="notification-rules-list">
-                        <!-- Notification rules will be loaded here by JS -->
-                        </tbody>
+                        <tbody id="notification-rules-list"></tbody>
                     </table>
                 </div>
             </div>
@@ -197,9 +225,7 @@
             <div id="tab-content-menu-order" class="tab-content">
                 <h2 class="section-title">Ordre et Hiérarchie des Menus</h2>
                 <div class="menu-tree-container">
-                    <ul id="menu-tree" class="menu-tree">
-                        <!-- Menu items will be loaded here for drag-and-drop -->
-                    </ul>
+                    <ul id="menu-tree" class="menu-tree"></ul>
                 </div>
                 <button id="save-menu-order-btn" class="btn btn-primary mt-4">
                     <span class="btn-text">Sauvegarder l'ordre</span>
@@ -247,9 +273,7 @@
                 <form id="referential-entry-form" class="form-grid">
                     <input type="hidden" id="referential-entry-id" name="id">
                     <input type="hidden" id="referential-entry-table" name="table_name">
-                    <div id="dynamic-referential-fields">
-                        <!-- Dynamic fields will be loaded here by JS -->
-                    </div>
+                    <div id="dynamic-referential-fields"></div>
                     <div class="modal-action">
                         <button type="button" class="btn" onclick="closeModal(document.getElementById('referential-entry-modal'))">Annuler</button>
                         <button type="submit" class="btn btn-primary">

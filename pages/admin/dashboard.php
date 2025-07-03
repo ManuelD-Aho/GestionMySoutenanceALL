@@ -1,5 +1,3 @@
-<!-- /pages/admin/dashboard.html -->
-<!-- Utilise la structure de layout_base.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -10,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="/assets/js/main.js" type="module" defer></script>
     <script src="/assets/js/pages/admin.js" type="module" defer></script>
-    <!-- Chart.js pour les graphiques -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -42,7 +39,6 @@
         <h1 class="page-title">Tableau de Bord Administrateur</h1>
 
         <div class="dashboard-grid">
-            <!-- Carte: Statistiques Utilisateurs -->
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-users icon-primary"></i> Utilisateurs</h2>
@@ -53,8 +49,6 @@
                     <p>Bloqués: <span id="stat-blocked-users" class="stat-value">...</span></p>
                 </div>
             </div>
-
-            <!-- Carte: Statistiques Rapports -->
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-file-alt icon-primary"></i> Rapports</h2>
@@ -65,8 +59,6 @@
                     <p>Validés: <span id="stat-validated-reports" class="stat-value">...</span></p>
                 </div>
             </div>
-
-            <!-- Carte: Tâches Asynchrones -->
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-tasks icon-primary"></i> Tâches Asynchrones</h2>
@@ -76,8 +68,6 @@
                     <p>Échouées: <span id="stat-failed-tasks" class="stat-value">...</span></p>
                 </div>
             </div>
-
-            <!-- Carte: Réclamations -->
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-question-circle icon-primary"></i> Réclamations</h2>
@@ -103,7 +93,6 @@
         <div class="dashboard-section">
             <h2 class="section-title"><i class="fas fa-exclamation-triangle icon-warning"></i> Alertes Système</h2>
             <div id="system-alerts-list" class="alert-list">
-                <!-- Alerts will be loaded here -->
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
                     <span>Aucune alerte critique pour le moment.</span>

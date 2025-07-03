@@ -1,4 +1,3 @@
-<!-- /pages/admin/utilisateurs.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -71,7 +70,6 @@
                 </tr>
                 </thead>
                 <tbody id="user-list-body">
-                <!-- User rows will be loaded here by JS -->
                 <tr><td colspan="7" class="text-center">Chargement des utilisateurs...</td></tr>
                 </tbody>
             </table>

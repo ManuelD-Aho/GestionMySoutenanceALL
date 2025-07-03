@@ -1,4 +1,3 @@
-<!-- /pages/etudiant/profil.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>

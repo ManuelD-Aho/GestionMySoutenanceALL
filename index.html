@@ -5,20 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bienvenue - GestionMySoutenance</title>
 
-    <!-- CSS Principal (compilé depuis votre input.css) -->
     <link href="/assets/css/main.css" rel="stylesheet">
-
-    <!-- Font Awesome pour les icônes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-    <!-- Script principal (type="module" pour permettre les imports/exports) -->
     <script src="/assets/js/auth.js" type="module" defer></script>
 </head>
 <body>
 
-<!-- =================================================================== -->
-<!-- == PORTAIL D'ACCUEIL (SPLASH SCREEN)                             == -->
-<!-- =================================================================== -->
+<!-- PORTAIL D'ACCUEIL -->
 <div id="welcome-portal" class="welcome-portal">
     <div class="welcome-content">
         <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
@@ -30,9 +23,7 @@
     </div>
 </div>
 
-<!-- =================================================================== -->
-<!-- == CONTENEUR PRINCIPAL D'AUTHENTIFICATION                        == -->
-<!-- =================================================================== -->
+<!-- CONTENEUR PRINCIPAL D'AUTHENTIFICATION -->
 <div id="auth-container" class="auth-container">
     <!-- CÔTÉ GAUCHE : CARROUSEL VISUEL -->
     <div class="auth-visual-side">
@@ -42,16 +33,13 @@
             <div class="carousel-image" style="background-image: url('/assets/images/auth-bg-3.jpg');"></div>
         </div>
         <div class="visual-overlay">
-            <div id="carousel-text-container" class="carousel-text-container">
-                <!-- Le texte du carrousel sera injecté ici par JS -->
-            </div>
+            <div id="carousel-text-container" class="carousel-text-container"></div>
         </div>
     </div>
 
     <!-- CÔTÉ DROIT : FORMULAIRES -->
     <div class="auth-form-side">
         <div id="form-wrapper" class="form-wrapper">
-            <!-- Zone pour les messages d'erreur/succès -->
             <div id="form-feedback"></div>
 
             <!-- FORMULAIRE DE CONNEXION -->
@@ -103,6 +91,55 @@
                     <a href="#" id="back-to-login-link" class="form-link"><i class="fas fa-arrow-left"></i> Retour à la connexion</a>
                 </div>
             </form>
+
+            <!-- FORMULAIRE 2FA -->
+            <form id="2fa-form" class="auth-form" novalidate>
+                <h2 class="form-title">Vérification 2FA</h2>
+                <p class="form-subtitle">Saisissez le code de votre application d'authentification.</p>
+                <div class="form-group">
+                    <label for="2fa-code">Code TOTP</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-key input-icon"></i>
+                        <input type="text" id="2fa-code" placeholder="XXXXXX" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-text">Vérifier</span>
+                    <span class="loading-spinner"></span>
+                </button>
+            </form>
+
+            <!-- FORMULAIRE RÉINITIALISATION MOT DE PASSE -->
+            <form id="reset-password-form" class="auth-form" novalidate>
+                <h2 class="form-title">Réinitialiser Mot de Passe</h2>
+                <p class="form-subtitle">Entrez votre nouveau mot de passe.</p>
+                <input type="hidden" id="reset-password-token">
+                <div class="form-group">
+                    <label for="new-password">Nouveau mot de passe</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="new-password" placeholder="••••••••" required autocomplete="new-password">
+                        <button type="button" class="password-toggle" data-toggle-password="new-password" aria-label="Afficher/Masquer le mot de passe">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-new-password">Confirmer mot de passe</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="confirm-new-password" placeholder="••••••••" required autocomplete="new-password">
+                        <button type="button" class="password-toggle" data-toggle-password="confirm-new-password" aria-label="Afficher/Masquer le mot de passe">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-text">Réinitialiser</span>
+                    <span class="loading-spinner"></span>
+                </button>
+            </form>
+
         </div>
     </div>
 </div>
