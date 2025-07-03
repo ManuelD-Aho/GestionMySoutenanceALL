@@ -667,7 +667,7 @@ export const functionService = {
     respondToReclamation,
     closeReclamation,
     validateStage,
-    generatePdf,a
+    generatePdf,
     importWordDocument,
     updateMenuStructure,
     getAdminDashboardStats,

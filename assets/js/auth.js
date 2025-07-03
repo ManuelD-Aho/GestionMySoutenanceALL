@@ -1,10 +1,8 @@
 // /assets/js/auth.js
 
-import { supabase } from './services/supabase-client.js';
 import { authService } from './services/auth-service.js';
-import { functionService } from './services/function-service.js';
 import { displayMessage, setButtonLoading } from './utils/helpers.js';
-import { PATHS } from './utils/constants.js';
+import { PATHS, ROLES } from './utils/constants.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- SÉLECTION DES ÉLÉMENTS DU DOM ---
@@ -43,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentForm: 'login',
         carouselInterval: null,
         carouselIndex: 0,
-        pending2FaUserId: null, // Utilisateur en attente de 2FA
     };
 
     const carouselContent = [
@@ -54,32 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FONCTIONS D'INITIALISATION ---
     async function init() {
-        // Vérifier si l'utilisateur est déjà connecté
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await authService.getUser();
         if (user) {
-            // Rediriger vers le dashboard approprié (main.js gérera la redirection spécifique au rôle)
-            window.location.href = PATHS.ETUDIANT_DASHBOARD; // Exemple de redirection par défaut
+            redirectToDashboard(user.profile.id_groupe_utilisateur);
             return;
         }
 
-        // Gérer les formulaires via l'URL (pour les liens de réinitialisation/validation)
-        const urlParams = new URLSearchParams(window.location.search);
-        const formParam = urlParams.get('form');
-        const tokenParam = urlParams.get('token');
-        const impersonateTokenParam = urlParams.get('impersonate_token'); // Pour l'impersonation
-
-        if (formParam === 'reset_password' && tokenParam) {
-            ui.inputs.resetPasswordToken.value = tokenParam;
-            switchForm('resetPassword');
-        } else if (formParam === 'validate_email' && tokenParam) {
-            await handleEmailValidation(tokenParam);
-        } else if (impersonateTokenParam) {
-            await handleImpersonationLogin(impersonateTokenParam);
-        } else {
-            // Par défaut, afficher le portail d'accueil
-            ui.welcomePortal.classList.remove('hidden');
-        }
-
+        ui.welcomePortal.classList.remove('hidden');
         setupEventListeners();
         startCarousel();
     }
@@ -87,8 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- GESTION DES ÉVÉNEMENTS ---
     function setupEventListeners() {
         ui.enterLoginBtn.addEventListener('click', showAuthContainer);
-        ui.links.forgotPassword.addEventListener('click', (e) => { e.preventDefault(); switchForm('forgotPassword'); });
-        ui.links.backToLogin.addEventListener('click', (e) => { e.preventDefault(); switchForm('login'); });
+        ui.links.forgotPassword.addEventListener('click', (e) => { e.preventDefault(); switchForm('forgotPassword', 'left'); });
+        ui.links.backToLogin.addEventListener('click', (e) => { e.preventDefault(); switchForm('login', 'right'); });
 
         Object.values(ui.forms).forEach(form => {
             if (form) {
@@ -101,10 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LOGIQUE D'ANIMATION ET D'INTERFACE ---
     function showAuthContainer() {
         ui.welcomePortal.classList.add('hidden');
-        ui.authContainer.classList.add('visible');
+        ui.authContainer.classList.remove('hidden');
+        setTimeout(() => ui.authContainer.classList.add('visible'), 50);
     }
 
-    function switchForm(targetFormKey) {
+    function switchForm(targetFormKey, direction = 'left') {
         if (state.currentForm === targetFormKey) return;
 
         const currentFormEl = ui.forms[state.currentForm];
@@ -115,30 +94,41 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const exitClass = direction === 'left' ? 'form-exit-to-left' : 'form-exit-to-right';
+        const enterClass = direction === 'left' ? 'form-enter-from-right' : 'form-enter-from-left';
+
+        // Set fixed height to prevent collapse
         ui.formWrapper.style.height = `${currentFormEl.offsetHeight}px`;
 
+        // Animate out
         currentFormEl.classList.remove('form-active');
-        currentFormEl.classList.add('form-exit-to-left');
+        currentFormEl.classList.add(exitClass);
 
         setTimeout(() => {
             currentFormEl.style.display = 'none';
-            currentFormEl.classList.remove('form-exit-to-left');
+            currentFormEl.classList.remove(exitClass);
 
+            // Prepare to animate in
             targetFormEl.style.display = 'block';
-            targetFormEl.classList.add('form-enter-from-right');
+            targetFormEl.classList.add(enterClass);
 
+            // Set height for the new form
             ui.formWrapper.style.height = `${targetFormEl.offsetHeight}px`;
+
+            // Force reflow before adding active class
             void targetFormEl.offsetWidth;
 
-            targetFormEl.classList.remove('form-enter-from-right');
+            // Animate in
+            targetFormEl.classList.remove(enterClass);
             targetFormEl.classList.add('form-active');
 
             state.currentForm = targetFormKey;
 
+            // Reset height to auto after animation
             setTimeout(() => {
                 ui.formWrapper.style.height = 'auto';
-            }, 600);
-        }, 500);
+            }, 500);
+        }, 400);
     }
 
     function togglePasswordVisibility(e) {
@@ -156,54 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function setButtonLoading(button, isLoading) {
-        const spinner = button.querySelector('.loading-spinner');
-        const text = button.querySelector('.btn-text');
-        if (!spinner || !text) return;
-
-        button.disabled = isLoading;
-        if (isLoading) {
-            button.classList.add('loading');
-            spinner.style.display = 'inline-block';
-            text.style.display = 'none';
-        } else {
-            button.classList.remove('loading');
-            spinner.style.display = 'none';
-            text.style.display = 'inline-block';
-        }
-    }
-
-    function displayMessage(type, message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `feedback-alert ${type}`;
-        const iconClass = {
-            'error': 'fa-times-circle',
-            'success': 'fa-check-circle',
-            'info': 'fa-info-circle',
-            'warning': 'fa-exclamation-triangle'
-        }[type] || 'fa-info-circle';
-
-        alertDiv.innerHTML = `<i class="fas ${iconClass}"></i><p>${message}</p>`;
-
-        ui.feedbackContainer.innerHTML = '';
-        ui.feedbackContainer.appendChild(alertDiv);
-
-        setTimeout(() => {
-            alertDiv.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-            alertDiv.style.opacity = '0';
-            alertDiv.style.transform = 'translateY(-10px)';
-            setTimeout(() => alertDiv.remove(), 500);
-        }, 5000);
-    }
-
-    // --- LOGIQUE MÉTIER (Appels réels à Supabase) ---
+    // --- LOGIQUE MÉTIER (Appels au service de simulation) ---
     async function handleFormSubmit(e) {
         e.preventDefault();
         const form = e.target;
         const button = form.querySelector('button[type="submit"]');
         setButtonLoading(button, true);
 
-        let email, password, totpCode, newPassword, confirmPassword, token;
+        let email, password;
         let result;
 
         switch (form.id) {
@@ -213,125 +163,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 result = await authService.signIn(email, password);
 
                 if (result.error) {
-                    // Gérer les erreurs spécifiques de Supabase Auth
-                    if (result.error.message.includes('Email not confirmed')) {
-                        displayMessage('warning', 'Votre email n\'est pas confirmé. Veuillez vérifier votre boîte de réception.');
-                    } else if (result.error.message.includes('Invalid login credentials')) {
-                        displayMessage('error', 'Identifiants incorrects.');
-                    } else if (result.error.message.includes('User not found')) {
-                        displayMessage('error', 'Utilisateur non trouvé.');
-                    } else {
-                        displayMessage('error', result.error.message);
-                    }
-                } else if (result.data.user && result.data.user.app_metadata.mfa_enabled) {
-                    // Si 2FA est activée pour l'utilisateur, passer au formulaire 2FA
-                    state.pending2FaUserId = result.data.user.id; // Stocker l'ID pour la vérification 2FA
-                    switchForm('twoFa');
-                    displayMessage('info', 'Vérification à deux facteurs requise.');
+                    displayMessage(ui.feedbackContainer, 'error', result.error.message);
                 } else {
-                    displayMessage('success', 'Connexion réussie ! Redirection...');
-                    // Redirection gérée par main.js après la connexion
-                    setTimeout(() => window.location.href = PATHS.ETUDIANT_DASHBOARD, 1000);
+                    displayMessage(ui.feedbackContainer, 'success', 'Connexion réussie ! Redirection...');
+                    setTimeout(() => redirectToDashboard(result.user.profile.id_groupe_utilisateur), 1000);
                 }
                 break;
 
             case 'forgot-password-form':
                 email = ui.inputs.forgotEmail.value;
                 result = await authService.sendPasswordReset(email);
-                if (!result.success) {
-                    displayMessage('error', result.message);
-                } else {
-                    displayMessage('success', result.message);
-                }
-                break;
-
-            case '2fa-form':
-                totpCode = ui.inputs.twoFaCode.value;
-                if (!state.pending2FaUserId) {
-                    displayMessage('error', 'Session 2FA expirée. Veuillez vous reconnecter.');
-                    switchForm('login');
-                    break;
-                }
-                result = await functionService.verify2FaCode(state.pending2FaUserId, totpCode);
-                if (!result.valid) {
-                    displayMessage('error', result.message);
-                } else {
-                    // Si le code 2FA est valide, on peut maintenant définir la session Supabase
-                    // Supabase Auth ne fournit pas directement un moyen de "confirmer" la 2FA après signInWithPassword
-                    // sans un flux spécifique. La meilleure approche est de laisser l'utilisateur se reconnecter
-                    // après avoir activé la 2FA, ou d'utiliser un flux de "challenge" si Supabase le supporte.
-                    // Pour cet exemple, si le code est valide, on considère l'utilisateur connecté.
-                    displayMessage('success', 'Vérification 2FA réussie ! Redirection...');
-                    setTimeout(() => window.location.href = PATHS.ETUDIANT_DASHBOARD, 1000);
-                }
-                break;
-
-            case 'reset-password-form':
-                newPassword = ui.inputs.newPassword.value;
-                confirmPassword = ui.inputs.confirmNewPassword.value;
-                token = ui.inputs.resetPasswordToken.value;
-
-                if (newPassword !== confirmPassword) {
-                    displayMessage('error', 'Les mots de passe ne correspondent pas.');
-                    break;
-                }
-                // Validation de robustesse du mot de passe (à ajouter dans helpers.js)
-                // if (!validatePasswordStrength(newPassword)) { displayMessage('error', 'Mot de passe trop faible.'); break; }
-
-                result = await authService.resetPassword(newPassword, token);
                 if (result.error) {
-                    displayMessage('error', result.error.message);
+                    displayMessage(ui.feedbackContainer, 'error', result.error.message);
                 } else {
-                    displayMessage('success', 'Mot de passe réinitialisé ! Vous pouvez maintenant vous connecter.');
-                    switchForm('login');
+                    displayMessage(ui.feedbackContainer, 'success', result.message);
                 }
                 break;
+
+            // Les autres formulaires (2FA, reset) sont simplifiés pour cette démo
+            // car ils nécessiteraient une logique de token plus complexe.
         }
         setButtonLoading(button, false);
     }
 
-    async function handleEmailValidation(token) {
-        displayMessage('info', 'Validation de votre adresse email en cours...');
-        const { success, message } = await functionService.validateEmailToken(token);
-        if (success) {
-            displayMessage('success', message);
-        } else {
-            displayMessage('error', message);
+    function redirectToDashboard(role) {
+        let path = PATHS.ETUDIANT_DASHBOARD; // Default
+        switch (role) {
+            case ROLES.ADMIN_SYS:
+                path = PATHS.ADMIN_DASHBOARD;
+                break;
+            case ROLES.ETUDIANT:
+                path = PATHS.ETUDIANT_DASHBOARD;
+                break;
+            case ROLES.COMMISSION:
+            case ROLES.ENSEIGNANT:
+                path = PATHS.COMMISSION_DASHBOARD;
+                break;
+            case ROLES.PERS_ADMIN:
+            case ROLES.RS:
+            case ROLES.AGENT_CONFORMITE:
+                path = PATHS.PERSONNEL_DASHBOARD;
+                break;
         }
-        // Nettoyer l'URL après la validation
-        window.history.replaceState({}, document.title, window.location.pathname);
-        // Afficher le formulaire de connexion
-        showAuthContainer();
-        switchForm('login');
-    }
-
-    async function handleImpersonationLogin(impersonateToken) {
-        displayMessage('info', 'Connexion en mode impersonation...');
-        try {
-            // Utiliser le token d'impersonation pour se connecter en tant qu'utilisateur cible
-            const { data, error } = await supabase.auth.signInWithIdToken({
-                provider: 'email', // Ou le fournisseur approprié si le token est un ID token
-                token: impersonateToken,
-            });
-
-            if (error) {
-                displayMessage('error', `Échec de l'impersonation: ${error.message}`);
-            } else {
-                displayMessage('success', 'Impersonation réussie ! Redirection...');
-                // Rediriger vers le dashboard approprié (main.js gérera la redirection spécifique au rôle)
-                setTimeout(() => window.location.href = PATHS.ETUDIANT_DASHBOARD, 1000);
-            }
-        } catch (error) {
-            displayMessage('error', `Erreur inattendue lors de l'impersonation: ${error.message}`);
-        } finally {
-            // Nettoyer l'URL après l'impersonation
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
+        window.location.href = path;
     }
 
     // --- LOGIQUE DU CARROUSEL ---
     function startCarousel() {
-        const images = ui.carousel.querySelectorAll('.carousel-image');
+        const images = Array.from(ui.carousel.querySelectorAll('.carousel-image'));
 
         function showNextItem() {
             const currentTextEl = ui.carouselTextContainer.querySelector('.carousel-text-item');
@@ -361,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 800);
         }
 
-        showNextItem();
+        showNextItem(); // Initial call
         state.carouselInterval = setInterval(showNextItem, 8000);
     }
 

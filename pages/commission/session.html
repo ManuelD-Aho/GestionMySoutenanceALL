@@ -1,0 +1,53 @@
+<!-- Contenu de pages/commission/session.php, mais en .html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Sessions - GestionMySoutenance</title>
+    <link href="/assets/css/main.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="/assets/js/main.js" type="module" defer></script>
+</head>
+<body>
+<div class="app-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header"><div class="logo">GestionMySoutenance</div></div>
+        <nav class="sidebar-nav"><ul id="sidebar-menu" class="nav-list"></ul></nav>
+        <div class="user-section">
+            <div class="user-info">
+                <img id="user-avatar-display" src="" alt="Avatar" class="user-avatar">
+                <div class="user-details">
+                    <div id="user-login-display" class="username">...</div>
+                    <div id="user-role-display" class="user-role">...</div>
+                </div>
+                <button id="logout-btn" class="user-menu-btn"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </aside>
+    <main id="main-content-area" class="main-content-area">
+        <div id="global-flash-messages" class="flash-message-container"></div>
+        <h1 class="page-title">Gestion des Sessions</h1>
+        <div class="tabs-container">
+            <div role="tablist" class="tabs"><a role="tab" class="tab tab-active" data-tab="list-sessions">Liste</a><a role="tab" class="tab" data-tab="create-session">Créer</a></div>
+            <div id="tab-content-list-sessions" class="tab-content active">
+                <div class="table-container"><table class="data-table"><thead><tr><th>Nom</th><th>Président</th><th>Début</th><th>Fin</th><th>Statut</th><th>Mode</th><th>Actions</th></tr></thead><tbody id="sessions-list-body"></tbody></table></div>
+            </div>
+            <div id="tab-content-create-session" class="tab-content">
+                <form id="create-session-form" class="form-grid">
+                    <div class="form-group"><label for="session-name">Nom</label><input type="text" id="session-name" name="nom_session" required></div>
+                    <div class="form-group"><label for="session-start-date">Début</label><input type="datetime-local" id="session-start-date" name="date_debut_session" required></div>
+                    <div class="form-group"><label for="session-end-date">Fin</label><input type="datetime-local" id="session-end-date" name="date_fin_prevue" required></div>
+                    <div class="form-group"><label for="session-mode">Mode</label><select id="session-mode" name="mode_session" required><option value="presentiel">Présentiel</option><option value="en_ligne">En Ligne</option></select></div>
+                    <div class="form-group"><label for="session-required-voters">Votants Requis</label><input type="number" id="session-required-voters" name="nombre_votants_requis" min="1" required></div>
+                    <div class="form-action-buttons"><button type="submit" class="btn btn-primary"><span class="btn-text">Créer</span><span class="loading-spinner"></span></button></div>
+                </form>
+            </div>
+        </div>
+        <dialog id="session-details-modal" class="modal"><div class="modal-box large-modal-box"><h3 class="modal-title" id="session-details-title"></h3><div class="modal-body"><p><strong>ID:</strong> <span id="modal-session-id"></span></p><p><strong>Nom:</strong> <span id="modal-session-name"></span></p><p><strong>Président:</strong> <span id="modal-session-president"></span></p><p><strong>Statut:</strong> <span id="modal-session-status"></span></p><p><strong>Mode:</strong> <span id="modal-session-mode"></span></p><p><strong>Votants:</strong> <span id="modal-session-voters"></span></p><div class="modal-action"><button class="btn" onclick="this.closest('dialog').close()">Fermer</button></div></div></div></dialog>
+        <dialog id="vote-modal" class="modal"><div class="modal-box"><h3 class="modal-title" id="vote-modal-title">Voter</h3><p>Rapport: <strong id="vote-report-title"></strong> par <strong id="vote-student-name"></strong></p><form id="vote-form" class="form-grid"><input type="hidden" id="vote-report-id-hidden" name="id_rapport_etudiant"><input type="hidden" id="vote-session-id-hidden" name="id_session"><div class="form-group"><label for="vote-decision">Décision</label><select id="vote-decision" name="id_decision_vote" required></select></div><div class="form-group"><label for="vote-comment">Commentaire</label><textarea id="vote-comment" name="commentaire_vote" rows="4"></textarea></div><div class="modal-action"><button type="button" class="btn" onclick="this.closest('dialog').close()">Annuler</button><button type="submit" class="btn btn-primary"><span class="btn-text">Voter</span><span class="loading-spinner"></span></button></div></form></div></dialog>
+        <template id="session-row-template"><tr><td class="session-name"></td><td class="session-president"></td><td class="session-start-date"></td><td class="session-end-date"></td><td class="session-status"></td><td class="session-mode"></td><td><button class="btn btn-sm btn-secondary view-session-btn"><i class="fas fa-eye"></i></button><button class="btn btn-sm btn-danger delete-session-btn"><i class="fas fa-trash"></i></button></td></tr></template>
+    </main>
+</div>
+</body>
+</html>

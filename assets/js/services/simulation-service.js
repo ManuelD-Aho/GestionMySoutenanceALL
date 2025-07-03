@@ -815,13 +815,286 @@ function getPrimaryKeyColumn(tableName) {
 // Charger la DB au démarrage du script
 loadDB();
 
-// Exporter les fonctions CRUD
-export const dataService = {
-    getRecords,
-    getRecordById,
-    createRecord,
-    updateRecord,
-    updateRecords, // Pour les mises à jour en masse
-    deleteRecord,
-    resetSimulationDB, // Pour le débogage
+
+async function getAdminDashboardStats() {
+    const { data: users } = await dataService.getRecords(TABLES.UTILISATEUR);
+    const { data: reports } = await dataService.getRecords(TABLES.RAPPORT_ETUDIANT);
+    const { data: reclamations } = await dataService.getRecords(TABLES.RECLAMATION);
+
+    const stats = {
+        users: {
+            total: users.length,
+            actif: users.filter(u => u.statut_compte === 'actif').length,
+            bloque: users.filter(u => u.statut_compte === 'bloque').length,
+        },
+        reports: {
+            soumis: reports.filter(r => r.id_statut_rapport === REPORT_STATUS.SOUMIS).length,
+            en_commission: reports.filter(r => r.id_statut_rapport === REPORT_STATUS.EN_COMMISSION).length,
+            valid: reports.filter(r => r.id_statut_rapport === REPORT_STATUS.VALID).length,
+            non_conf: reports.filter(r => r.id_statut_rapport === REPORT_STATUS.NON_CONF).length,
+            brouillon: reports.filter(r => r.id_statut_rapport === REPORT_STATUS.BROUILLON).length,
+            en_correction: reports.filter(r => r.id_statut_rapport === REPORT_STATUS.CORRECT).length,
+        },
+        queue: { pending: 10, failed: 2 }, // Simulé
+        reclamations: {
+            ouverte: reclamations.filter(r => r.id_statut_reclamation === 'RECLA_OUVERTE').length,
+            en_cours: reclamations.filter(r => r.id_statut_reclamation === 'RECLA_EN_COURS').length,
+        },
+        activity: { 'SUCCES_LOGIN': 150, 'SOUMISSION_RAPPORT': 20, 'APPROBATION_PV': 10 } // Simulé
+    };
+    return { success: true, stats };
+}
+
+async function getUsersWithProfiles(filters = {}) {
+    let { data: users, error } = await dataService.getRecords(TABLES.UTILISATEUR, filters);
+    if (error) return { users: [], error };
+
+    for (let user of users) {
+        let profileTable;
+        switch (user.id_type_utilisateur) {
+            case USER_TYPES.ETUD: profileTable = TABLES.ETUDIANT; break;
+            case USER_TYPES.ENS: profileTable = TABLES.ENSEIGNANT; break;
+            case USER_TYPES.PERS_ADMIN: profileTable = TABLES.PERSONNEL_ADMINISTRATIF; break;
+            default: user.profile = {}; continue;
+        }
+        const { data: profile } = await dataService.getRecordById(profileTable, user.numero_utilisateur);
+        user.profile = profile || {};
+
+        if (user.id_type_utilisateur === USER_TYPES.ETUD) {
+            const { data: inscriptions } = await dataService.getRecords(TABLES.INSCRIRE, { numero_carte_etudiant: user.numero_utilisateur }, 'date_inscription DESC', 1);
+            user.profile.inscription = inscriptions[0] || null;
+        }
+    }
+    return { users, error: null };
+}
+
+async function createUserAndProfile(formData) {
+    const userType = formData.id_type_utilisateur;
+    const prefix = Object.keys(ID_PREFIXES).find(key => ID_PREFIXES[key] === userType.replace('TYPE_', ''));
+    const userId = generateUniqueId(prefix || 'UTILISATEUR');
+
+    const userData = {
+        numero_utilisateur: userId,
+        login_utilisateur: formData.login_utilisateur,
+        email_principal: formData.email_principal,
+        mot_de_passe: `hashed_${formData.mot_de_passe}`,
+        id_groupe_utilisateur: formData.id_groupe_utilisateur,
+        id_type_utilisateur: userType,
+        id_niveau_acces_donne: formData.id_niveau_acces_donne,
+        statut_compte: formData.statut_compte,
+        date_creation: new Date().toISOString(),
+        email_valide: true,
+    };
+
+    let profileData = { nom: formData.nom, prenom: formData.prenom, numero_utilisateur: userId };
+    let profileTable, profileIdField;
+
+    if (userType === USER_TYPES.ETUD) { profileTable = TABLES.ETUDIANT; profileIdField = 'numero_carte_etudiant'; }
+    else if (userType === USER_TYPES.ENS) { profileTable = TABLES.ENSEIGNANT; profileIdField = 'numero_enseignant'; }
+    else if (userType === USER_TYPES.PERS_ADMIN) { profileTable = TABLES.PERSONNEL_ADMINISTRATIF; profileIdField = 'numero_personnel_administratif'; }
+
+    profileData[profileIdField] = userId;
+
+    const { error: userError } = await dataService.createRecord(TABLES.UTILISATEUR, userData);
+    if (userError) return { success: false, message: userError.message };
+
+    if (profileTable) {
+        const { error: profileError } = await dataService.createRecord(profileTable, profileData);
+        if (profileError) {
+            await dataService.deleteRecord(TABLES.UTILISATEUR, userId);
+            return { success: false, message: profileError.message };
+        }
+    }
+    return { success: true, userId, message: 'User and profile created.' };
+}
+
+async function updateUserAndProfile(userId, formData) {
+    const { data: user } = await dataService.getRecordById(TABLES.UTILISATEUR, userId);
+    if (!user) return { success: false, message: 'User not found.' };
+
+    const userData = {
+        login_utilisateur: formData.login_utilisateur,
+        email_principal: formData.email_principal,
+        id_groupe_utilisateur: formData.id_groupe_utilisateur,
+        id_type_utilisateur: formData.id_type_utilisateur,
+        id_niveau_acces_donne: formData.id_niveau_acces_donne,
+        statut_compte: formData.statut_compte,
+    };
+    if (formData.mot_de_passe) userData.mot_de_passe = `hashed_${formData.mot_de_passe}`;
+
+    let profileData = { nom: formData.nom, prenom: formData.prenom };
+    let profileTable;
+    if (user.id_type_utilisateur === USER_TYPES.ETUD) profileTable = TABLES.ETUDIANT;
+    else if (user.id_type_utilisateur === USER_TYPES.ENS) profileTable = TABLES.ENSEIGNANT;
+    else if (user.id_type_utilisateur === USER_TYPES.PERS_ADMIN) profileTable = TABLES.PERSONNEL_ADMINISTRATIF;
+
+    const { error: userError } = await dataService.updateRecord(TABLES.UTILISATEUR, userId, userData);
+    if (userError) return { success: false, message: userError.message };
+
+    if (profileTable) {
+        const { error: profileError } = await dataService.updateRecord(profileTable, userId, profileData);
+        if (profileError) return { success: false, message: profileError.message };
+    }
+    return { success: true, message: 'User and profile updated.' };
+}
+
+async function deleteUserAndProfile(userId) {
+    const { data: user } = await dataService.getRecordById(TABLES.UTILISATEUR, userId);
+    if (!user) return { success: true, message: 'User already deleted.' };
+
+    let profileTable;
+    if (user.id_type_utilisateur === USER_TYPES.ETUD) profileTable = TABLES.ETUDIANT;
+    else if (user.id_type_utilisateur === USER_TYPES.ENS) profileTable = TABLES.ENSEIGNANT;
+    else if (user.id_type_utilisateur === USER_TYPES.PERS_ADMIN) profileTable = TABLES.PERSONNEL_ADMINISTRATIF;
+
+    if (profileTable) await dataService.deleteRecord(profileTable, userId);
+    await dataService.deleteRecord(TABLES.UTILISATEUR, userId);
+
+    return { success: true, message: 'User deleted.' };
+}
+
+async function createReportFromModel(studentId, modelId) {
+    const { data: model } = await dataService.getRecordById(TABLES.RAPPORT_MODELE, modelId);
+    const { data: modelSections } = await dataService.getRecords(TABLES.RAPPORT_MODELE_SECTION, { id_modele: modelId }, 'ordre ASC');
+    const reportId = generateUniqueId('RAPPORT');
+    await dataService.createRecord(TABLES.RAPPORT_ETUDIANT, {
+        id_rapport_etudiant: reportId,
+        libelle_rapport_etudiant: `Rapport basé sur ${model.nom_modele}`,
+        theme: 'À définir',
+        resume: '',
+        numero_carte_etudiant: studentId,
+        id_statut_rapport: REPORT_STATUS.BROUILLON,
+        date_derniere_modif: new Date().toISOString(),
+    });
+    for (const modelSection of modelSections) {
+        await dataService.createRecord(TABLES.SECTION_RAPPORT, {
+            id_rapport_etudiant: reportId,
+            titre_section: modelSection.titre_section,
+            contenu_section: modelSection.contenu_par_defaut,
+            ordre: modelSection.ordre,
+        });
+    }
+    return { success: true, reportId };
+}
+
+async function createBlankReport(studentId) {
+    const reportId = generateUniqueId('RAPPORT');
+    await dataService.createRecord(TABLES.RAPPORT_ETUDIANT, {
+        id_rapport_etudiant: reportId,
+        libelle_rapport_etudiant: 'Nouveau rapport',
+        theme: 'À définir',
+        resume: '',
+        numero_carte_etudiant: studentId,
+        id_statut_rapport: REPORT_STATUS.BROUILLON,
+        date_derniere_modif: new Date().toISOString(),
+    });
+    await dataService.createRecord(TABLES.SECTION_RAPPORT, {
+        id_rapport_etudiant: reportId,
+        titre_section: 'Introduction',
+        contenu_section: '',
+        ordre: 1,
+    });
+    return { success: true, reportId };
+}
+
+async function saveReportDraft(reportId, studentId, metadonnees, sections) {
+    await dataService.updateRecord(TABLES.RAPPORT_ETUDIANT, reportId, metadonnees);
+    for (const title in sections) {
+        await dataService.updateRecords(TABLES.SECTION_RAPPORT, { contenu_section: sections[title] }, { id_rapport_etudiant: reportId, titre_section: title });
+    }
+    return { success: true, message: 'Draft saved.' };
+}
+
+async function submitReport(reportId, studentId, metadonnees, sections) {
+    await saveReportDraft(reportId, studentId, metadonnees, sections);
+    await dataService.updateRecord(TABLES.RAPPORT_ETUDIANT, reportId, {
+        id_statut_rapport: REPORT_STATUS.SOUMIS,
+        date_soumission: new Date().toISOString(),
+    });
+    return { success: true, message: 'Report submitted.' };
+}
+
+async function submitVote(reportId, sessionId, userId, decision, comment) {
+    await dataService.createRecord(TABLES.VOTE_COMMISSION, {
+        id_vote: generateUniqueId('VOTE'),
+        id_session: sessionId,
+        id_rapport_etudiant: reportId,
+        numero_enseignant: userId,
+        id_decision_vote: decision,
+        commentaire_vote: comment,
+        date_vote: new Date().toISOString(),
+        tour_vote: 1,
+    });
+    return { success: true, message: 'Vote submitted.' };
+}
+
+async function approvePv(pvId, userId) {
+    await dataService.updateRecord(TABLES.COMPTE_RENDU, pvId, { id_statut_pv: 'PV_VALIDE' });
+    return { success: true, message: 'PV approved.' };
+}
+
+async function processConformityCheck(reportId, userId, isConforme) {
+    const newStatus = isConforme ? REPORT_STATUS.CONF : REPORT_STATUS.NON_CONF;
+    await dataService.updateRecord(TABLES.RAPPORT_ETUDIANT, reportId, { id_statut_rapport: newStatus });
+    return { success: true, message: 'Conformity check processed.' };
+}
+
+async function activateStudentAccount(studentId, login, email, password) {
+    await dataService.createRecord(TABLES.UTILISATEUR, {
+        numero_utilisateur: studentId,
+        login_utilisateur: login,
+        email_principal: email,
+        mot_de_passe: `hashed_${password}`,
+        id_groupe_utilisateur: ROLES.ETUDIANT,
+        id_type_utilisateur: USER_TYPES.ETUD,
+        statut_compte: 'actif',
+        date_creation: new Date().toISOString(),
+        email_valide: true,
+    });
+    await dataService.updateRecord(TABLES.ETUDIANT, studentId, { numero_utilisateur: studentId });
+    return { success: true, message: 'Account activated.' };
+}
+
+async function respondToReclamation(reclamationId, responseText, userId) {
+    await dataService.updateRecord(TABLES.RECLAMATION, reclamationId, {
+        reponse_reclamation: responseText,
+        id_statut_reclamation: 'RECLA_EN_COURS',
+        numero_personnel_traitant: userId,
+        date_reponse: new Date().toISOString(),
+    });
+    return { success: true, message: 'Response sent.' };
+}
+
+async function closeReclamation(reclamationId, responseText, userId) {
+    await dataService.updateRecord(TABLES.RECLAMATION, reclamationId, {
+        reponse_reclamation: responseText,
+        id_statut_reclamation: 'RECLA_CLOTUREE',
+        numero_personnel_traitant: userId,
+        date_reponse: new Date().toISOString(),
+    });
+    return { success: true, message: 'Reclamation closed.' };
+}
+
+async function validateStage(studentId, companyId, userId) {
+    await dataService.updateRecords(TABLES.FAIRE_STAGE, { est_valide: true }, { numero_carte_etudiant: studentId, id_entreprise: companyId });
+    return { success: true, message: 'Stage validated.' };
+}
+
+export const functionService = {
+    getAdminDashboardStats,
+    getUsersWithProfiles,
+    createUserAndProfile,
+    updateUserAndProfile,
+    deleteUserAndProfile,
+    createReportFromModel,
+    createBlankReport,
+    saveReportDraft,
+    submitReport,
+    submitVote,
+    approvePv,
+    processConformityCheck,
+    activateStudentAccount,
+    respondToReclamation,
+    closeReclamation,
+    validateStage,
 };

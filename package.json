@@ -1,7 +1,7 @@
 {
   "name": "gestionmysoutenance",
   "version": "1.0.0",
-  "description": "Frontend de l'application GestionMySoutenance avec Supabase.",
+  "description": "Frontend de l'application GestionMySoutenance avec backend simulé.",
   "private": true,
   "scripts": {
     "dev": "postcss ./assets/css/input.css -o ./assets/css/style.css --watch",
@@ -12,11 +12,9 @@
     "cssnano": "^7.0.1",
     "postcss": "^8.4.38",
     "postcss-cli": "^11.0.0",
-    "supabase": "^2.30.4",
     "tailwindcss": "^3.4.3"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.43.4",
     "daisyui": "^4.11.1"
   }
 }
