@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - GestionMySoutenance</title>
+    <link href="/assets/css/main.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="/assets/js/main.js" type="module" defer></script>
+</head>
+<body>
+<div class="app-wrapper">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">GestionMySoutenance</div>
+            <input type="text" class="sidebar-search" placeholder="Rechercher...">
+        </div>
+        <nav class="sidebar-nav">
+            <ul id="sidebar-menu" class="nav-list">
+                <!-- Menu items will be dynamically loaded here by main.js -->
+            </ul>
+        </nav>
+        <div class="user-section">
+            <div class="user-info">
+                <img id="user-avatar-display" src="/assets/images/default-avatar.png" alt="Avatar" class="user-avatar">
+                <div class="user-details">
+                    <div id="user-login-display" class="username">Chargement...</div>
+                    <div id="user-role-display" class="user-role">Rôle</div>
+                </div>
+                <button id="logout-btn" class="user-menu-btn"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main id="main-content-area" class="main-content-area">
+        <!-- Global Flash Messages Container -->
+        <div id="global-flash-messages" class="flash-message-container"></div>
+        <!-- Page-specific content will be loaded here -->
+        <!-- Example: <h1>Page Title</h1> <p>Content...</p> -->
+    </main>
+</div>
+
+<!-- Modals (common for all pages, can be included in main.js or a common modal component) -->
+<dialog id="confirm-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg" id="confirm-modal-title">Confirmation</h3>
+        <p class="py-4" id="confirm-modal-message">Êtes-vous sûr de vouloir effectuer cette action ?</p>
+        <div class="modal-action">
+            <button class="btn" id="confirm-modal-cancel">Annuler</button>
+            <button class="btn btn-primary" id="confirm-modal-confirm">Confirmer</button>
+        </div>
+    </div>
+</dialog>
+
+</body>
+</html>

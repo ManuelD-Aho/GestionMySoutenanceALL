@@ -1,0 +1,130 @@
+/* === STYLES & ANIMATIONS AVANCÉS POUR L'AUTHENTIFICATION === */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* -- Portail d'accueil -- */
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(var(--p), 0.4), 0 0 30px rgba(var(--p), 0.2);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(var(--p), 0.6), 0 0 45px rgba(var(--p), 0.4);
+    }
+}
+
+#welcome-portal.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.95);
+}
+
+#enter-login-btn {
+    /* --p est la couleur primaire de DaisyUI, nous l'utilisons pour le glow */
+    animation: pulse-glow 3s infinite ease-in-out;
+}
+
+/* -- Conteneur d'authentification principal -- */
+#auth-container {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+#auth-container.visible {
+    opacity: 1;
+}
+
+/* -- Carrousel d'images avec effet Ken Burns -- */
+@keyframes ken-burns {
+    0% {
+        transform: scale(1) translate(0, 0);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1.1) translate(-2%, 2%);
+        opacity: 1;
+    }
+}
+
+.carousel-image {
+    transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: brightness(0.8);
+}
+
+.carousel-image.active {
+    opacity: 1;
+    animation: ken-burns 15s infinite alternate-reverse ease-in-out;
+}
+
+/* -- Animations de transition pour les formulaires -- */
+#form-wrapper {
+    position: relative;
+    overflow: hidden;
+    min-height: 450px; /* Hauteur minimale pour éviter les sauts de page */
+}
+
+.auth-form {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+}
+
+.form-inactive {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.form-active {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.form-exit-to-left {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+.form-enter-from-right {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.form-exit-to-right {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.form-enter-from-left {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+/* -- Micro-interactions sur les champs de formulaire -- */
+.form-control .input:focus-within,
+.form-control .input:focus {
+    box-shadow: 0 0 0 2px hsl(var(--p) / 0.2);
+}
+
+.password-toggle-icon {
+    transition: transform 0.3s ease;
+}
+.password-toggle-icon.toggled {
+    transform: rotateY(180deg);
+}
+
+/* -- Animation pour les messages d'erreur/succès -- */
+@keyframes slide-down-fade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#form-feedback .alert {
+    animation: slide-down-fade 0.4s ease forwards;
+}
